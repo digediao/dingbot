@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    db-config:
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/dingbot_database?serverTimezone=UTC
+    username: root
+    password: 123
+
+
+#jedis:
+#  host: localhost
+#  port: 6379
+##  password:
+#  waitTime: 10000
