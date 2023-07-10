@@ -6,7 +6,6 @@ import com.azure.ai.openai.models.*;
 import com.azure.core.credential.AzureKeyCredential;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import dingding.bot.controller.acceptCtl;
-import dingding.bot.entity.azure_openai_history;
 import dingding.bot.pojo.Payload;
 import dingding.bot.service.dingbotService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +53,8 @@ public class dingbotImpl implements dingbotService {
         Map<String, String> hashData = redisTemplate.opsForHash().entries(payload.getSessionWebhook());
         for(Map.Entry<String,String> entry : hashData.entrySet()){
             if(hashData.size()==0) break;
-            history.add("Question: "+entry.getKey());
-            history.add("Answer: "+entry.getValue());
+            history.add(entry.getKey());
+            history.add(entry.getValue());
         }
 
         //【prompt】 将历史对话拼接成一个字符串,构建提示消息
@@ -89,19 +88,21 @@ public class dingbotImpl implements dingbotService {
                         + "number of completion token is %d, and number of total tokens in request and response is %d.%n",
                 usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
 
-        sendAnswerToDingTalk(answer, payload.getSessionWebhook());
+        sendAnswerToDingTalk(answer, payload, "");
     }
 
     /**
      * 发送响应数据到钉钉机器人
+     * 消息类型为：text
      * @param answer
      */
-    private void sendAnswerToDingTalk(String answer,String sessionWebhook) {
+    private void sendAnswerToDingTalk(String answer,Payload payload, String msgType) {
+        msgType = "text";
         // 构造回答消息——msgtype:text/markdown/image/link/actionCard
-        String jsonPayload = "{\"msgtype\": \"text\", \"text\": {\"content\": \"" + answer + "\"}}";
+        String jsonPayload = "{\"msgtype\": \""+msgType+"\", \"text\": {\"content\": \"" + answer + "\"}}";
 
         try {
-            URL url = new URL(sessionWebhook);
+            URL url = new URL(payload.getSessionWebhook());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
