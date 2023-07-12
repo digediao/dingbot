@@ -8,7 +8,10 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+#设置spring相关配置：mysql和redis数据源
 spring:
+  application:
+    name: dingbot
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/dingbot_database?serverTimezone=UTC
@@ -16,6 +19,21 @@ spring:
     password: 123
   redis:
     host: 175.178.253.59
+#    host: localhost      #客户这里需要改成localhost
     port: 6379
     password: 123
-    timeout: 0   #客户端与服务器之间的连接超时时间:在指定时间内没有收到响应连接关闭
+    timeout: 10000
+    lettuce:
+      pool:
+        max-active: 10
+        max-wait: -1
+        max-idle: 5
+        min-idle: 0
+#    timeout: 0   #客户端与服务器之间的连接超时时间:在指定时间内没有收到响应连接关闭
+
+#设置线程池
+Thread:
+  CorePoolSize: 10
+  MaxPoolSize: 20
+  QueueCapacity: 100
+  ThreadNamePrefix: taskExecutor-

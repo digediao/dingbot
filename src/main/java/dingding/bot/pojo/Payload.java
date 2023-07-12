@@ -57,6 +57,7 @@ public class Payload {
     //@机器人发送的消息内容
     private TextContent text;
 
+
     //发送消息类型
     private String msgtype;
 }

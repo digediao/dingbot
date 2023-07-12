@@ -1,7 +1,5 @@
-# 功能
-超时时自动发送响应消息：超过5s
-提高响应速度
-提高并发能力:同时接收多个消息，依次回答
-微调模型
-完成钉钉机器人应有的功能：发送互动卡片、消息撤回、消息查询、群中成员消息查询
-支持多种类型消息:text、markdown
+用户可以在azure_openai_gpt35.java中改变自己的azure openai订阅中的密钥、终结点、部署名，以连接不同的openai订阅
+虚拟机需要准备：nginx、redis、jar包及运行环境
+并发(顺序处理、放入队列)、改变连接方式（原来是HttpURLConnection）、与redis的连接、添加日志
+
+客户需要改的地方：application.yml | config.properties

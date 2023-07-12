@@ -1,18 +1,27 @@
 package dingding.bot.controller;
 
 import dingding.bot.config.DisableCertificateValidation;
+import dingding.bot.handler.RequestHandler;
 import dingding.bot.pojo.Payload;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import dingding.bot.service.dingbotService;
 
-@RestController
-public class acceptCtl {
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 
+@RestController
+@Slf4j
+public class acceptCtl {
     @Autowired
     private dingbotService dingbotService;
+    @Autowired
+    private RequestHandler handler;
 
     /**
      * 获取@机器人的post请求
@@ -20,19 +29,15 @@ public class acceptCtl {
      */
     @PostMapping("/webhook")
     public void handleDingTalkCallback(@RequestBody Payload payload) {
+        log.info("payload信息:"+payload);
         //本地测试：禁用校验
         try {
             DisableCertificateValidation.disableCertificateValidation();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        System.out.println(payload);
-        // 1、在这里处理钉钉机器人的回调消息
-        String question = payload.getText().getContent();
-        // 2、调用OpenAI API获取回答，最后发送回答到钉钉机器人
-        dingbotService.getAnswerFromAzureOpenAI(question, payload);
+        handler.handle(payload);
     }
-
 
 
 

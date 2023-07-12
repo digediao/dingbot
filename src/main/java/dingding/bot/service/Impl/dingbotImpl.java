@@ -4,14 +4,17 @@ import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.ai.openai.models.*;
 import com.azure.core.credential.AzureKeyCredential;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import dingding.bot.controller.acceptCtl;
 import dingding.bot.pojo.Payload;
 import dingding.bot.service.dingbotService;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import dingding.bot.mapper.dingbotMP;
 
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
@@ -20,28 +23,24 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static dingding.bot.util.azure_openai_gpt35.*;
-import static dingding.bot.util.redis_Constant.DINGDING_SESSIONWEBHOOK;
-import static dingding.bot.util.redis_Constant.OPENAI_ANSWER;
 
 @Service
 public class dingbotImpl implements dingbotService {
     //全局存储历史
     private static final List<String> history = new ArrayList<>();
     @Autowired
-    dingbotMP dingbotMP;
-    @Autowired
     RedisTemplate redisTemplate;
     
     /**
      * 根据提出的问题转发到azure openai中并返回答案
+     *
      * @param question
      * @return
      */
-    public void getAnswerFromAzureOpenAI(String question, Payload payload){
+    public String getAnswerFromAzureOpenAI(String question, Payload payload){
         //建立openai客户端
         OpenAIClient client = new OpenAIClientBuilder()
                 .endpoint(openai_endpoint)
@@ -88,7 +87,8 @@ public class dingbotImpl implements dingbotService {
                         + "number of completion token is %d, and number of total tokens in request and response is %d.%n",
                 usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
 
-        sendAnswerToDingTalk(answer, payload, "");
+//        sendAnswerToDingTalk(answer, payload);
+        return answer;
     }
 
     /**
@@ -96,29 +96,36 @@ public class dingbotImpl implements dingbotService {
      * 消息类型为：text
      * @param answer
      */
-    private void sendAnswerToDingTalk(String answer,Payload payload, String msgType) {
-        msgType = "text";
+    public void sendAnswerToDingTalk(String answer, Payload payload, CloseableHttpClient httpClient) {
+        String senderNick = payload.getSenderNick();
         // 构造回答消息——msgtype:text/markdown/image/link/actionCard
-        String jsonPayload = "{\"msgtype\": \""+msgType+"\", \"text\": {\"content\": \"" + answer + "\"}}";
+        String jsonPayload = "{\"msgtype\": \""+"text"+"\", \"text\": {\"content\": \"" + "@" + senderNick+" ,"+answer + "\"}}";
 
+//        HttpClient方法
         try {
-            URL url = new URL(payload.getSessionWebhook());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            conn.setDoOutput(true);
-            // 设置连接超时为10秒
-            conn.setConnectTimeout(10000);
-            // 设置读取超时为10秒
-            conn.setReadTimeout(10000);
+            String dingTalkUrl = payload.getSessionWebhook();
+            HttpPost httpPost = new HttpPost(dingTalkUrl);
+            httpPost.setHeader("Content-Type", "application/json");
 
-            try (DataOutputStream outputStream = new DataOutputStream(conn.getOutputStream())) {
-                outputStream.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
+            // 构建请求体
+            StringEntity requestEntity = new StringEntity(jsonPayload, "UTF-8");
+            httpPost.setEntity(requestEntity);
+
+            // 发送请求并获取响应
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity responseEntity = response.getEntity();
+
+            // 处理响应
+            if (responseEntity != null) {
+                String responseBody = EntityUtils.toString(responseEntity);
+                // 处理响应内容
+                System.out.println(responseBody);
             }
-            System.out.println("发送数据成功："+conn.getResponseCode());
-            conn.disconnect();
+            EntityUtils.consume(responseEntity);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+
     }
 }
