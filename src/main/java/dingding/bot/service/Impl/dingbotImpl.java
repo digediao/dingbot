@@ -4,8 +4,10 @@ import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.ai.openai.models.*;
 import com.azure.core.credential.AzureKeyCredential;
+import dingding.bot.log.logger;
 import dingding.bot.pojo.Payload;
 import dingding.bot.service.dingbotService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -28,11 +30,13 @@ import java.util.concurrent.TimeUnit;
 import static dingding.bot.util.azure_openai_gpt35.*;
 
 @Service
+@Slf4j
 public class dingbotImpl implements dingbotService {
     //全局存储历史
     private static final List<String> history = new ArrayList<>();
+    private static final logger logger = new logger();
     @Autowired
-    RedisTemplate redisTemplate;
+    private RedisTemplate redisTemplate;
     
     /**
      * 根据提出的问题转发到azure openai中并返回答案
@@ -72,10 +76,8 @@ public class dingbotImpl implements dingbotService {
         String answer = "";
         for (ChatChoice choice : chatCompletions.getChoices()) {
             ChatMessage message = choice.getMessage();
-            System.out.printf("Index: %d, Chat Role: %s.%n", choice.getIndex(), message.getRole());
-            System.out.println("Message:");
-            System.out.println(message.getContent());
             answer = message.getContent();
+            log.info("openai获取到的答案:{}",answer);
         }
         //插入当前问答历史数据，并设置与机器人相同的存亡时间
         redisTemplate.opsForHash().put(payload.getSessionWebhook(),question,answer);
@@ -83,11 +85,12 @@ public class dingbotImpl implements dingbotService {
 
         //打印信息
         CompletionsUsage usage = chatCompletions.getUsage();
-        System.out.printf("Usage: number of prompt token is %d, "
-                        + "number of completion token is %d, and number of total tokens in request and response is %d.%n",
-                usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+        logger.StringInfo(
+                "prompt提示词的token数:"+usage.getPromptTokens()
+                ,"completion机器人回答的token数:"+usage.getCompletionTokens()
+                ,"请求和响应的总token数:"+usage.getTotalTokens()
+        );
 
-//        sendAnswerToDingTalk(answer, payload);
         return answer;
     }
 

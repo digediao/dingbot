@@ -18,7 +18,7 @@ spring:
     username: root
     password: 123
   redis:
-    host: tx.digediao.asia
+    host: 175.178.253.59
 #    host: localhost      #客户这里需要改成localhost
     port: 6379
     password: 123
@@ -31,10 +31,11 @@ spring:
         min-idle: 0
 #    timeout: 0   #客户端与服务器之间的连接超时时间:在指定时间内没有收到响应连接关闭
   rabbitmq:
-    host: tx.digediao.asia
+    host: 175.178.253.59
+#    host: localhost      #客户这里需要改成localhost
     port: 5672
-    username: guest
-    password: guest
+    username: admin
+    password: 123
 
 
 #设置线程池

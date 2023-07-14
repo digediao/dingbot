@@ -1,6 +1,10 @@
 package dingding.bot.config;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -9,6 +13,8 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import static dingding.bot.util.rabbitmqName.*;
 
 @Configuration
 public class rabbitmqConfig {
@@ -45,8 +51,20 @@ public class rabbitmqConfig {
         return new Jackson2JsonMessageConverter();
     }
 
-    @Bean(name = "dingbot_queue")
+    /**
+     * dingbot的队列、交换机及routing-key
+     * @return
+     */
+    @Bean
     public Queue dingbot_queue() {
-        return new Queue("dingbot_queue");
+        return new Queue(DINGBOT_QUEUE);
+    }
+    @Bean
+    public DirectExchange dingbot_exchange(){
+        return new DirectExchange(DINGBOT_EXCHANGE);
+    }
+    @Bean
+    public Binding binding() {
+        return BindingBuilder.bind(dingbot_queue()).to(dingbot_exchange()).with(DINGBOT_ROUTING_KEY);
     }
 }
