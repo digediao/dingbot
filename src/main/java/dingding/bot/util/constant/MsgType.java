@@ -1,4 +1,4 @@
-package dingding.bot.util;
+package dingding.bot.util.constant;
 
 public class MsgType {
     public static final String TEXT = "text";
